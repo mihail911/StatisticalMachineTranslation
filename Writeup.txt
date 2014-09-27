@@ -1,2 +1,0 @@
-This is the writeup for our assignment where we will document  our code design
-decisions as well as any notes on implementation and performance.
