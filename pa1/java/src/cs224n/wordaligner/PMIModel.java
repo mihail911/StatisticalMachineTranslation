@@ -25,8 +25,8 @@ public class PMIModel implements WordAligner {
 		List<String> targetWords = sentencePair.getTargetWords();
 		List<String> srcWords = sentencePair.getSourceWords();
 
-		System.out.println(srcWords);
-		System.out.println(targetWords);
+		// System.out.println(srcWords);
+		// System.out.println(targetWords);
 
 		//Make sure to add null word at beginning of sentence
 		//srcWords.add(0, NULL_WORD);
@@ -137,6 +137,6 @@ public class PMIModel implements WordAligner {
 		}
 
 		// TODO: erase me, coocurrences
-		System.out.println(simOccurCounts);
+		// System.out.println(simOccurCounts);
 	}
 }
