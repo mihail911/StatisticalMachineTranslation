@@ -23,7 +23,7 @@ public class PMIModel implements WordAligner {
 		List<String> srcWords = sentencePair.getSourceWords();
 
 		//Make sure to add Null Word at beginning of sentence
-		srcWords.add(0, NULL_WORD);
+		//srcWords.add(0, NULL_WORD);
 		Alignment alignment = new Alignment();
 
 		List<Double> scores = new ArrayList<Double>();
