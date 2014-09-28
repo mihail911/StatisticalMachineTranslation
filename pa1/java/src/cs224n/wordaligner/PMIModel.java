@@ -25,8 +25,9 @@ public class PMIModel implements WordAligner {
 		List<String> targetWords = sentencePair.getTargetWords();
 		List<String> srcWords = sentencePair.getSourceWords();
 
-		System.out.println(srcWords);
-		System.out.println(targetWords);
+		// TODO: print sentence pair
+		// System.out.println(srcWords);
+		// System.out.println(targetWords);
 
 		//Make sure to add null word at beginning of sentence
 		//srcWords.add(0, NULL_WORD);
@@ -68,8 +69,7 @@ public class PMIModel implements WordAligner {
 
 			// Only add an alignment if the best score is better than the NULL alignment
 			Double null_score = simOccurCounts.getCount(NULL_WORD, target)
-							/(srcWordProbability.getCount(NULL_WORD)*
-								targetWordProbability.getCount(target));
+							/(targetWordProbability.getCount(target)); // probability of NULL is 1
 
 			if (null_score < maxSoFar) {
 				alignment.addPredictedAlignment(targetIndex,indexOfMax);
@@ -92,17 +92,18 @@ public class PMIModel implements WordAligner {
 			List<String> targetWords = pair.getTargetWords();
 			List<String> srcWords = pair.getSourceWords();
 
-
-
-			//Add an instance of the null word for the source counts (f_0)
-			srcWords.add(0, NULL_WORD);
-
 			for(String sword: srcWords){
 				//For every instance of word, increment corresponding counter
 				srcWordProbability.incrementCount(sword,1.0);
 			}
 			for(String tword: targetWords){
 				targetWordProbability.incrementCount(tword,1.0);
+			}
+
+			//Add an instance of the null word for the source counts (f_0)
+			srcWords.add(0, NULL_WORD);
+
+			for(String tword: targetWords){
 				for(String sword: srcWords){
 					simOccurCounts.incrementCount(sword, tword, 1.0);
 				}
@@ -137,6 +138,6 @@ public class PMIModel implements WordAligner {
 		}
 
 		// TODO: erase me, coocurrences
-		System.out.println(simOccurCounts);
+		// System.out.println(simOccurCounts);
 	}
 }
