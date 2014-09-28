@@ -58,6 +58,7 @@ public class PMIModel implements WordAligner {
 		Set<List<String> > seenSrcTarget = new HashSet<List<String> >();
 
 		for(SentencePair pair: trainingData){
+		        seenSrcTarget.clear();
 			List<String> targetWords = pair.getTargetWords();
 			List<String> srcWords = pair.getSourceWords();
 			//Add an instance of the null word for the source counts (f_0)
@@ -82,10 +83,18 @@ public class PMIModel implements WordAligner {
 				simOccurCounts.incrementCount(srcTarget.get(0),
 							 srcTarget.get(1), 1.0);	
 			}
-		}	
+
+			// TODO: erase me, sentences
+			// System.out.println(srcWords);
+			// System.out.println(targetWords);
+		}
+
 		//Normalize counts to get probabilities
 		srcWordProbability = Counters.normalize(srcWordProbability);
 		targetWordProbability = Counters.normalize(targetWordProbability);
+		// TODO: erase me, unigram occurances
+		// System.out.println(srcWordProbability);
+		// System.out.println(targetWordProbability);
 
 		//Iterate over key set of co-Occurrence counter map and normalize
 		//appropriately.
@@ -98,6 +107,8 @@ public class PMIModel implements WordAligner {
 				simOccurCounts.setCount(key,v,oldCount/numPairs);
 			}
 		}
-
+		
+		// TODO: erase me, coocurrences
+		// System.out.println(simOccurCounts);
 	}
 }
