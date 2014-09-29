@@ -12,7 +12,7 @@ public class IBMModel1 implements WordAligner{
   private CounterMap<String,String> coocurrenceCount =
               new CounterMap<String,String>();
   private CounterMap<String,String> translationProb =
-              new CounterMap<String,String>();
+              new CounterMap<String,String>(); // This actually P(English | Foreign)
 
   Integer numIterations = 5;
 
@@ -65,9 +65,15 @@ public class IBMModel1 implements WordAligner{
 
         for (String foreignWord: foreignWords) {
           for (String englishWord: englishWords) {
-            Counter<String> englishWordCounters = translationProb.getCounter(foreignWord);
-            Double englishWordPairs = englishWordCounters.totalCount();
-            Double delta = translationProb.getCount(foreignWord, englishWord) / englishWordPairs;
+
+            Double foreignWordsNormalizationCount = 0.0;
+            for (String foreignWordNested: foreignWords) {
+              foreignWordsNormalizationCount += translationProb.getCount(foreignWordNested, englishWord);
+              // System.out.println(englishWord + " | " + foreignWordNested + ": " + translationProb.getCount(foreignWordNested, englishWord));
+            }
+            Double delta = translationProb.getCount(foreignWord, englishWord) / foreignWordsNormalizationCount;
+
+            // System.out.println("F: " + foreignWord + " E: " + englishWord + " delta: " + delta + " = " + translationProb.getCount(foreignWord, englishWord) + "/" + foreignWordsNormalizationCount);
 
             Double oldCount = coocurrenceCount.getCount(foreignWord, englishWord);
             coocurrenceCount.setCount(foreignWord, englishWord, oldCount + delta);
@@ -93,7 +99,7 @@ public class IBMModel1 implements WordAligner{
         }
       }
 
-      System.out.println(translationProb);
+      // System.out.println(translationProb);
     }
 
 
