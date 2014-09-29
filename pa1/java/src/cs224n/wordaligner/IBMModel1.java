@@ -26,11 +26,18 @@ public class IBMModel1 implements WordAligner{
       List<String> englishWords = pair.getTargetWords();
       List<String> foreignWords = pair.getSourceWords();
 
+      foreignWords.add(0, NULL_WORD);
+
+      System.out.println(englishWords);
+      System.out.println(foreignWords);
+
       for (String foreignWord: foreignWords) {
         for (String englishWord: englishWords) {
           translationProb.incrementCount(foreignWord, englishWord, 1.0);
         }
       }
+
+      foreignWords.remove(0);
     }
 
     Set<String> foreignWordsSet = translationProb.keySet();
@@ -54,6 +61,8 @@ public class IBMModel1 implements WordAligner{
         List<String> englishWords = pair.getTargetWords();
         List<String> foreignWords = pair.getSourceWords();
 
+        foreignWords.add(0, NULL_WORD);
+
         for (String foreignWord: foreignWords) {
           for (String englishWord: englishWords) {
             Counter<String> englishWordCounters = translationProb.getCounter(foreignWord);
@@ -66,6 +75,8 @@ public class IBMModel1 implements WordAligner{
             foreignCount.setCount(foreignWord, oldCount + delta);
           }
         }
+
+        foreignWords.remove(0);
       }
 
       for (String foreignWord: foreignWordsSet) {
