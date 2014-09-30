@@ -6,104 +6,80 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 
-public class IBMModel1 implements WordAligner{
+public class IBMModel1 implements WordAligner {
 
-  private Counter<String> foreignCount = new Counter<String>();
-  private CounterMap<String,String> coocurrenceCount =
+  // t(f|e): {e, f} note that this is actually indexed in reverse
+  // the probability of producing translation f given word e
+  private CounterMap<String,String> t_given_e_of_f =
               new CounterMap<String,String>();
-  private CounterMap<String,String> translationProb =
+  // C(e, f): {e, f}
+  // the accumulator for fractional counts of coocurring english and french words
+  private CounterMap<String,String> count_of_e_and_f =
               new CounterMap<String,String>(); // This actually P(English | Foreign)
 
-  Integer numIterations = 5;
+  private int numIterations = 5;
+  private Double PNull = 0.2;
 
-	public Alignment align(SentencePair sentencePair){
+  public Alignment align(SentencePair sentencePair) {
     return new Alignment();
-	}
+  }
 
-	public void train(List<SentencePair> trainingdata){
-
+  public void train(List<SentencePair> trainingdata) {
+    // Step 1: Initialize
     for (SentencePair pair: trainingdata) {
       List<String> englishWords = pair.getTargetWords();
       List<String> foreignWords = pair.getSourceWords();
 
-      foreignWords.add(0, NULL_WORD);
-
-      System.out.println(englishWords);
-      System.out.println(foreignWords);
-
       for (String foreignWord: foreignWords) {
         for (String englishWord: englishWords) {
-          translationProb.incrementCount(foreignWord, englishWord, 1.0);
+          // iterate over every word pair and record occurence
+          t_given_e_of_f.setCount(englishWord, foreignWord, 1.0);
         }
-      }
-
-      foreignWords.remove(0);
-    }
-
-    Set<String> foreignWordsSet = translationProb.keySet();
-
-    for (String foreignWord: foreignWordsSet) {
-      Counter<String> englishWordCounters = translationProb.getCounter(foreignWord);
-      Double englishWordPairs = englishWordCounters.totalCount();
-      Set<String> englishWords = englishWordCounters.keySet();
-      for(String englishWord: englishWords) {
-        Double oldCount = englishWordCounters.getCount(englishWord);
-        translationProb.setCount(foreignWord, englishWord, oldCount/englishWordPairs);
+        // add a count for NULL
+        t_given_e_of_f.setCount(NULL_WORD, foreignWord, 1.0);
       }
     }
+    t_given_e_of_f = Counters.conditionalNormalize(t_given_e_of_f);
 
-    for (int s = 0; s < numIterations; s += 1) {
-      // clear counts
-      coocurrenceCount = new CounterMap<String,String>();
-      foreignCount = new Counter<String>();
+    // Step 2: EM
+    Double epsilon = 0.0;
+    Double Z = 0.0;
+    Double PAlignment = 0.0;
+
+    for (int iter=0; iter<numIterations; iter++) {
 
       for (SentencePair pair: trainingdata) {
         List<String> englishWords = pair.getTargetWords();
         List<String> foreignWords = pair.getSourceWords();
-
-        foreignWords.add(0, NULL_WORD);
+        PAlignment = (1-PNull)/englishWords.size();
 
         for (String foreignWord: foreignWords) {
+          // precompute normalization constant for parameter update
+          Z = 0.0;
           for (String englishWord: englishWords) {
-
-            Double foreignWordsNormalizationCount = 0.0;
-            for (String foreignWordNested: foreignWords) {
-              foreignWordsNormalizationCount += translationProb.getCount(foreignWordNested, englishWord);
-              // System.out.println(englishWord + " | " + foreignWordNested + ": " + translationProb.getCount(foreignWordNested, englishWord));
-            }
-            Double delta = translationProb.getCount(foreignWord, englishWord) / foreignWordsNormalizationCount;
-
-            // System.out.println("F: " + foreignWord + " E: " + englishWord + " delta: " + delta + " = " + translationProb.getCount(foreignWord, englishWord) + "/" + foreignWordsNormalizationCount);
-
-            Double oldCount = coocurrenceCount.getCount(foreignWord, englishWord);
-            coocurrenceCount.setCount(foreignWord, englishWord, oldCount + delta);
-            oldCount = foreignCount.getCount(foreignWord);
-            foreignCount.setCount(foreignWord, oldCount + delta);
+            Z += t_given_e_of_f.getCount(englishWord, foreignWord);
           }
-        }
 
-        foreignWords.remove(0);
-      }
+          // compute parameter updates
+          for (String englishWord: englishWords) {
+            epsilon = (PAlignment*t_given_e_of_f.getCount(englishWord, foreignWord)) / (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
+            count_of_e_and_f.incrementCount(englishWord, foreignWord, epsilon);
+          }
 
-      for (String foreignWord: foreignWordsSet) {
-        Counter<String> englishWordCounters = translationProb.getCounter(foreignWord);
-        Double englishWordPairs = englishWordCounters.totalCount();
-        Set<String> englishWords = englishWordCounters.keySet();
-
-        Double fCount = foreignCount.getCount(foreignWord);
-
-        for(String englishWord: englishWords) {
-          Double cCount = coocurrenceCount.getCount(foreignWord, englishWord);
-
-          translationProb.setCount(foreignWord, englishWord, cCount/fCount);
+          // compute parameter update for NULL
+          epsilon = (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord)) /
+                  (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
+          count_of_e_and_f.incrementCount(NULL_WORD, foreignWord, epsilon);
         }
       }
 
-      // System.out.println(translationProb);
+      // conditionally normalize model
+      t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
+
+      // System.out.println(t_given_e_of_f);
     }
+  }
 
-
-
-	}
 
 }
+
