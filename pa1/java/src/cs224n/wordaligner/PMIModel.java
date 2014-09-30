@@ -76,6 +76,7 @@ public class PMIModel implements WordAligner {
 			}
 
 		}
+		// System.out.println(alignment);
 		return alignment;
 	}
 

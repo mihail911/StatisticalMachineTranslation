@@ -21,14 +21,46 @@ public class IBMModel1 implements WordAligner {
   private Double PNull = 0.2;
 
   public Alignment align(SentencePair sentencePair) {
-    return new Alignment();
+    Alignment alignments = new Alignment();
+    // beware: there is a flip here
+    List<String> englishWords = sentencePair.getSourceWords();
+    List<String> foreignWords = sentencePair.getTargetWords();
+
+    int foreignIndex = 0;
+    for (String foreignWord: foreignWords) {
+      Double maxScoreSoFar = -1.0;
+      int indexOfBestAlignment = -1;
+      int englishIndex = 0;
+
+      for (String englishWord: englishWords) {
+        Double score = (1 - PNull)/englishWords.size() * t_given_e_of_f.getCount(englishWord, foreignWord);
+        if (score > maxScoreSoFar) {
+          maxScoreSoFar = score;
+          indexOfBestAlignment = englishIndex;
+        }
+        englishIndex += 1;
+      }
+
+      Double nullScore = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
+
+      if (nullScore < maxScoreSoFar) {
+        // beware: there is a flip here
+        // System.out.println("score: " + maxScoreSoFar + " nullScore: " + nullScore);
+        alignments.addPredictedAlignment(foreignIndex, indexOfBestAlignment);
+      }
+
+      foreignIndex += 1;
+    }
+    // System.out.println(alignments);
+    return alignments;
   }
 
   public void train(List<SentencePair> trainingdata) {
     // Step 1: Initialize
     for (SentencePair pair: trainingdata) {
-      List<String> englishWords = pair.getTargetWords();
-      List<String> foreignWords = pair.getSourceWords();
+      // beware: there is a flip here
+      List<String> englishWords = pair.getSourceWords();
+      List<String> foreignWords = pair.getTargetWords();
 
       for (String foreignWord: foreignWords) {
         for (String englishWord: englishWords) {
@@ -49,8 +81,9 @@ public class IBMModel1 implements WordAligner {
     for (int iter=0; iter<numIterations; iter++) {
 
       for (SentencePair pair: trainingdata) {
-        List<String> englishWords = pair.getTargetWords();
-        List<String> foreignWords = pair.getSourceWords();
+        // beware: there is a flip here
+        List<String> englishWords = pair.getSourceWords();
+        List<String> foreignWords = pair.getTargetWords();
         PAlignment = (1-PNull)/englishWords.size();
 
         for (String foreignWord: foreignWords) {
@@ -79,7 +112,6 @@ public class IBMModel1 implements WordAligner {
       // System.out.println(t_given_e_of_f);
     }
   }
-
 
 }
 
