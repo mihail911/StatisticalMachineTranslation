@@ -29,6 +29,7 @@ public class IBMModel2 implements WordAligner{
               = new ArrayList<ArrayList<CounterMap<String,String>>>();
   private static ArrayList<ArrayList<Counter<String>>> count_i
               = new ArrayList<ArrayList<Counter<String>>>();
+
   private static int numIterations = 5;
   private static Double PNull = 0.2;
 
@@ -44,10 +45,10 @@ public class IBMModel2 implements WordAligner{
     for (String foreignWord: foreignWords) {
       Double maxScoreSoFar = -1.0;
       int indexOfBestAlignment = -1;
-      int englishIndex = 0;
+      int englishIndex = 0; //TODO: What's the point of maintaining this counter?
 
       for (String englishWord: englishWords) {
-        Double score =  q_j_given_i.get(forLength).get(engLength).
+        Double score = q_j_given_i.get(engLength).get(forLength).
                     getCount(englishWord,foreignWord) * t_given_e_of_f.getCount(englishWord, foreignWord);
         if (score > maxScoreSoFar) {
           maxScoreSoFar = score;
@@ -88,7 +89,6 @@ public class IBMModel2 implements WordAligner{
 
 
     //Iterate over all training data to find max sentence lengths
-    //and to populate counters as necessary. 
     for(SentencePair sentence: trainingdata){
       List<String> englishWords = sentence.getSourceWords();
       List<String> foreignWords = sentence.getTargetWords();
@@ -102,13 +102,13 @@ public class IBMModel2 implements WordAligner{
     }
 
     //Initialize q_j_given_i array with empty counters
-    for(int i = 0; i < maxFSentLength; ++i){
+    for(int i = 0; i < maxESentLength; ++i){
       q_j_given_i.add(new ArrayList<CounterMap<String,String>>());
       count_j_given_i.add(new ArrayList<CounterMap<String,String>>());
 
-      for(int j = 0; j < maxESentLength; ++j){
+      for(int j = 0; j < maxFSentLength; ++j){
         q_j_given_i.get(i).add(new CounterMap<String,String>());
-        count_j_given_i.add(new ArrayList<CounterMap<String,String>>());
+        count_j_given_i.get(i).add(new CounterMap<String,String>());
       }
     }
 
@@ -121,24 +121,24 @@ public class IBMModel2 implements WordAligner{
 
       for (String foreignWord: foreignWords) {
         for (String englishWord: englishWords) {
-          q_j_given_i.get(forLength).get(engLength).
+          q_j_given_i.get(engLength).get(forLength).
                   setCount(englishWord,foreignWord, randGen.nextDouble());
         }
-        q_j_given_i.get(forLength).get(engLength).
+        q_j_given_i.get(engLength).get(forLength).
                   setCount(NULL_WORD, foreignWord, randGen.nextDouble());
       }
     }
 
 
     //RUN EM to determine new parameters t(e|f) and q(j|i,l,m)
-    for (int iter=0; iter<numIterations; iter++) {
-
+    for (int iter = 0; iter < numIterations; ++iter) {
       for (SentencePair pair: trainingdata) {
         // beware: there is a flip here
         List<String> englishWords = pair.getSourceWords();
         List<String> foreignWords = pair.getTargetWords();
         int engLength = englishWords.size();
         int forLength = foreignWords.size();
+        Double PAlignment = (1-PNull)/engLength;
 
         Double Z  = 0.0;
         Double epsilon = 0.0;
@@ -147,24 +147,36 @@ public class IBMModel2 implements WordAligner{
           Z = 0.0;
           for (String englishWord: englishWords) {
             Z += (t_given_e_of_f.getCount(englishWord, foreignWord) *
-                  q_j_given_i.get(forLength).get(engLength).
+                  q_j_given_i.get(engLength).get(forLength).
                     getCount(englishWord,foreignWord));
           }
 
           // compute parameter updates
           for (String englishWord: englishWords) {
-            epsilon = (q_j_given_i.get(forLength).get(engLength).
+            epsilon = (q_j_given_i.get(engLength).get(forLength).
                     getCount(englishWord,foreignWord)*
                     t_given_e_of_f.getCount(englishWord, foreignWord)) 
                     / (t_given_e_of_f.getCount(NULL_WORD, foreignWord));
 
             count_of_e_and_f.incrementCount(englishWord, foreignWord, epsilon);
+            q_j_given_i.get(engLength).get(forLength).
+                          incrementCount(englishWord,foreignWord,epsilon);
           }
+
+          // Compute parameter updates for NULL
+
         }
       }
       // conditionally normalize model
       t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
+
       //Update distortion prob as well
+      for(int e = 0; e < maxESentLength; ++e){
+        for(int f = 0; f < maxFSentLength; ++f){
+
+          q_j_given_i.get(e).set(f, Counters.conditionalNormalize(count_j_given_i.get(e).get(f)));
+        }
+      }
     }
   }
 
