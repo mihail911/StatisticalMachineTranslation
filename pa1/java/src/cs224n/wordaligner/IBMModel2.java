@@ -192,7 +192,7 @@ public class IBMModel2 implements WordAligner{
       for (int lenF=0; lenF<maxFSentLength; lenF++)
         for (int lenE=0; lenE<maxESentLength; lenE++)
           q_j_given_i.get(lenE).set(lenF, Counters.conditionalNormalize(q_j_given_i.get(lenE).get(lenF)));
-      t_given_e_of_f = Counters.conditionalNormalize(t_given_e_of_f);
+      t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
     }
 
     System.out.println(t_given_e_of_f);
