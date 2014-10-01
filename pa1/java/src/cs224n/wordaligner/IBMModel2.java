@@ -37,46 +37,38 @@ public class IBMModel2 implements WordAligner{
    */
   public Alignment align(SentencePair sentencePair){
     Alignment alignments = new Alignment();
-    // // beware: there is a flip here
-    // List<String> englishWords = sentencePair.getSourceWords();
-    // List<String> foreignWords = sentencePair.getTargetWords();
-    // int engLength = englishWords.size();
-    // int forLength = foreignWords.size();
 
-    // int foreignIndex = 0;
-    // for (String foreignWord: foreignWords) {
-    //   Double maxScoreSoFar = -1.0;
-    //   int indexOfBestAlignment = -1;
-    //   int englishIndex = 0; //TODO: What's the point of maintaining this counter?
+    // beware: there is a flip here
+    List<String> englishWords = sentencePair.getSourceWords();
+    List<String> foreignWords = sentencePair.getTargetWords();
 
-    //   for (String englishWord: englishWords) {
-    //     //System.out.println("Q(j|i) : "+ q_j_given_i.get(engLength-1).get(forLength-1));
-    //     //System.out.println("T(e|f): " + t_given_e_of_f.getCount(englishWord, foreignWord));
-    //     Double score = q_j_given_i.get(engLength-1).get(forLength-1).
-    //                 getCount(englishWord,foreignWord) * t_given_e_of_f.getCount(englishWord, foreignWord);
-    //     //System.out.println("SCORE: " + score);
-    //     if (score > maxScoreSoFar) {
-    //       maxScoreSoFar = score;
-    //       indexOfBestAlignment = englishIndex;
-    //     }
-    //     englishIndex += 1;
-    //   }
+    int foreignIndex = 0;
+    for (int j=0; j<foreignWords.size(); j++) {
+      String foreignWord = foreignWords.get(j);
+      Double maxScoreSoFar = -1.0;
+      int indexOfBestAlignment = -1;
+      int englishIndex = 0;
 
-    //   //TODO: FIX COMPUTATION OF NULL SCORE
-    //   Double nullScore = PNull * q_j_given_i.get(engLength-1).get(forLength-1).
-    //                 getCount(NULL_WORD,foreignWord) *
-    //                 t_given_e_of_f.getCount(NULL_WORD, foreignWord);
-    //   //System.out.println("NULL: " + nullScore);
+      for (int i=0; i<englishWords.size(); i++) {
+        String englishWord = englishWords.get(i);
+        Double score = (1 - PNull) * q_j_given_i.get(englishWords.size()-1).get(foreignWords.size()-1).getCount(i, j) * t_given_e_of_f.getCount(englishWord, foreignWord);
+        if (score > maxScoreSoFar) {
+          maxScoreSoFar = score;
+          indexOfBestAlignment = englishIndex;
+        }
+        englishIndex += 1;
+      }
 
-    //   if (nullScore < maxScoreSoFar) {
-    //     //System.out.println("SOME ALIGNMENT ADDED");
-    //     // beware: there is a flip here
-    //     // System.out.println("score: " + maxScoreSoFar + " nullScore: " + nullScore);
-    //     alignments.addPredictedAlignment(foreignIndex, indexOfBestAlignment);
-    //   }
+      Double nullScore = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
 
-    //   foreignIndex += 1;
-    // }
+      if (nullScore < maxScoreSoFar) {
+        // beware: there is a flip here
+        // System.out.println("score: " + maxScoreSoFar + " nullScore: " + nullScore);
+        alignments.addPredictedAlignment(foreignIndex, indexOfBestAlignment);
+      }
+
+      foreignIndex += 1;
+    }
 
     return alignments;
   }
@@ -195,8 +187,8 @@ public class IBMModel2 implements WordAligner{
       t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
     }
 
-    System.out.println(t_given_e_of_f);
-    System.out.println(q_j_given_i);
+    //System.out.println(t_given_e_of_f);
+    //System.out.println(q_j_given_i);
   }
 
 }
