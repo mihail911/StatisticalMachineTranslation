@@ -1,5 +1,6 @@
 package cs224n.wordaligner;
 
+import cs224n.wordaligner.IBMModel1;
 import cs224n.util.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -78,11 +79,14 @@ public class IBMModel2 implements WordAligner{
    * We first estimate the parameters t(e|f) using M1 and then we run
    * the algorithm provided in Figure 2 of the Collins' handout.
    */
-  public void train(List<SentencePair> trainingdata){
+  public void train(List<SentencePair> trainingdata) {
     int maxFSentLength = 0;
     int maxESentLength = 0;
     Random randGen = new Random();
 
+    IBMModel1 model1 = new IBMModel1();
+    model1.train(trainingdata);
+    t_given_e_of_f = model1.get_t_given_e_of_f();
 
     //NOTE: WHEN ACCESSING q_j_given_i ArrayList REMEMEMBER INDEX
     // OFF BY 1 for USING SENTENCE LENGTHS
@@ -123,9 +127,9 @@ public class IBMModel2 implements WordAligner{
           String englishWord = englishWords.get(i);
           q_j_given_i.get(engLength-1).get(forLength-1).
                   setCount(i, j, 1.0);
-          t_given_e_of_f.setCount(englishWord, foreignWord, 1.0); // TODO: should really use Model 1
+          // t_given_e_of_f.setCount(englishWord, foreignWord, 1.0); // TODO: should really use Model 1
         }
-        t_given_e_of_f.setCount(NULL_WORD, foreignWord, 1.0); // TODO: should really use Model 1
+        // t_given_e_of_f.setCount(NULL_WORD, foreignWord, 1.0); // TODO: should really use Model 1
       }
     }
 

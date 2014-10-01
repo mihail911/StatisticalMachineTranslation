@@ -20,6 +20,10 @@ public class IBMModel1 implements WordAligner {
   private int numIterations = 5;
   private Double PNull = 0.2;
 
+  public CounterMap<String,String> get_t_given_e_of_f() {
+    return t_given_e_of_f;
+  }
+
   public Alignment align(SentencePair sentencePair) {
     Alignment alignments = new Alignment();
     // beware: there is a flip here
