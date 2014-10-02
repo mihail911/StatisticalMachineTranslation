@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
-if [ $# -ne 3 ]
-then
-    echo "do ./devtest.sh PMIModel numIterations pNull"
-    exit -1
-fi
 
 for language in french hindi chinese
 do
+  echo ----- Running $language.BaselineWordAligner
 
   java -cp java/classes cs224n.assignments.WordAlignmentTester \
     -dataPath /afs/ir/class/cs224n/data/pa1/ \
     -model cs224n.wordaligner.BaselineWordAligner -language $language -evalSet dev \
     -trainSentences 10000 -numIterations 1 -pNull 0.2 > $language.Baseline.tuning.out
+
+  echo ----- Running $language.PMIModel
 
   java -cp java/classes cs224n.assignments.WordAlignmentTester \
     -dataPath /afs/ir/class/cs224n/data/pa1/ \
@@ -24,6 +22,8 @@ do
     do
       for numIterations in 1 3 6 10 30
       do
+        echo ----- Running $language.alignmentModel with pNull=$pNull, numIterations=$numIterations
+
         java -cp java/classes cs224n.assignments.WordAlignmentTester \
           -dataPath /afs/ir/class/cs224n/data/pa1/ \
           -model cs224n.wordaligner.$alignmentModel -language $language -evalSet dev \
