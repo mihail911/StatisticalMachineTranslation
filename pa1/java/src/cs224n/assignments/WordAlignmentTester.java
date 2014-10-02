@@ -56,16 +56,16 @@ public final class WordAlignmentTester {
   }
 
   /**
-   * 
+   *
    * @param args
    */
   public static void main(String[] args) {
     // Parse command line
     final Map<String,String> argMap = CommandLineUtils.simpleCommandLineParser(args);
-    final int maxTrainingSentences = argMap.containsKey("-trainSentences") ? 
+    final int maxTrainingSentences = argMap.containsKey("-trainSentences") ?
         Integer.parseInt(argMap.get("-trainSentences")) : Integer.MAX_VALUE;
     final boolean verbose = argMap.containsKey("-verbose");
-    final String model = argMap.containsKey("-model") ? 
+    final String model = argMap.containsKey("-model") ?
         argMap.get("-model") : "cs224n.wordaligner.BaselineWordAligner";
     final String language = argMap.containsKey("-language") ? argMap.get("-language") : FRENCH;
     final String outputFile = argMap.containsKey("-outputAlignments") ? argMap.get("-outputAlignments") : "";
@@ -73,6 +73,10 @@ public final class WordAlignmentTester {
     if (outputFile.length() > 0) dataset = "";
     String basePath = argMap.containsKey("-dataPath") ? argMap.get("-dataPath") : DATA_PATH;
     basePath += dataset.equalsIgnoreCase("miniTest") ? "/mini" : "/"+language;
+
+    // custom hyperparameters
+    final int numIterations = argMap.containsKey("-numIterations") ? Integer.parseInt(argMap.get("-numIterations")) : 5;
+    final Double pNull = argMap.containsKey("-pNull") ? Double.parseDouble(argMap.get("-pNull")) : 5;
 
     // Target language is hard-coded as English
     final String sourceFileExtension = GetLanguageExtension(language);
@@ -113,6 +117,10 @@ public final class WordAlignmentTester {
     // Train model
     System.out.println("Model: "+model);
     WordAligner wordAligner = loadModel(model);
+    // Set hyperparameters
+    System.out.println("Setting Hyperparamers: numIterations=" + numIterations + ", pNull=" + pNull);
+    wordAligner.setHyperparameters(numIterations, pNull);
+
     wordAligner.train(trainingSentencePairs);
 
     // Run inference and evaluate
@@ -125,7 +133,7 @@ public final class WordAlignmentTester {
 
   /**
    * Load word alignment model by reflection.
-   * 
+   *
    * @param model
    * @return
    */
@@ -146,7 +154,7 @@ public final class WordAlignmentTester {
 
   /**
    * Evaluate the aligner on a gold test set using Alignment Error Rate (AER).
-   * 
+   *
    * @param wordAligner
    * @param testSentencePairs
    * @param testAlignments
@@ -192,9 +200,9 @@ public final class WordAlignmentTester {
 
   /**
    * Write alignments in GIZA++ format. Assumes that NULL alignments are not included in the Alignment object.
-   * 
+   *
    * For more information on this format, see: http://www.statmt.org/moses/?n=FactoredTraining.AlignWords
-   * 
+   *
    * @param wordAligner
    * @param trainingSentencePairs
    * @param outputFile
@@ -226,7 +234,7 @@ public final class WordAlignmentTester {
 
   /**
    * Read gold alignments file in format from NAACL-03 / ACL-05 shared tasks on word alignment.
-   * 
+   *
    * @param fileName
    * @return
    */
@@ -248,7 +256,7 @@ public final class WordAlignmentTester {
         // Some languages don't make the S/P distinction (e.g., the Hindi data)
         final boolean isSure = type.equals("S");
 
-        Alignment alignment = alignments.containsKey(sentenceID) ? 
+        Alignment alignment = alignments.containsKey(sentenceID) ?
             alignments.get(sentenceID) : new Alignment();
             alignment.addGoldAlignment(targetPosition, sourcePosition, isSure);
             alignments.put(sentenceID, alignment);
@@ -263,7 +271,7 @@ public final class WordAlignmentTester {
 
   /**
    * Read test files that correspond to gold word alignments.
-   * 
+   *
    * @param path
    * @param srcExtension
    * @param tgtExtension
@@ -277,7 +285,7 @@ public final class WordAlignmentTester {
 
   /**
    * Load aligned sentences from training data.
-   * 
+   *
    * @param path
    * @param maxSentencePairs - a list of (source,target) sentences
    * @return
@@ -301,7 +309,7 @@ public final class WordAlignmentTester {
   /**
    * Read a training data specification in the format of the NAACL-03 / ACL-05 shared task on
    * word alignment.
-   * 
+   *
    * @param path
    * @return
    */
@@ -333,7 +341,7 @@ public final class WordAlignmentTester {
 
   /**
    * Read a set of sentences from aligned files.
-   * 
+   *
    * @param filePair
    * @return
    */
@@ -365,7 +373,7 @@ public final class WordAlignmentTester {
 
   /**
    * Perform whitespace tokenization and intern strings.
-   * 
+   *
    * @param line
    * @return
    */
