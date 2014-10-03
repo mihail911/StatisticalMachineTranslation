@@ -18,7 +18,12 @@ public class IBMModel1 implements WordAligner {
               new CounterMap<String,String>(); // This actually P(English | Foreign)
 
   private int numIterations = 5;
-  private Double PNull = 0.2;
+  private Double pNull = 0.2;
+
+  public void setHyperparameters(int numIterations, Double pNull) {
+    this.numIterations = numIterations;
+    this.pNull = pNull;
+  }
 
   public CounterMap<String,String> get_t_given_e_of_f() {
     return t_given_e_of_f;
@@ -37,7 +42,7 @@ public class IBMModel1 implements WordAligner {
       int englishIndex = 0;
 
       for (String englishWord: englishWords) {
-        Double score = (1 - PNull)/englishWords.size() * t_given_e_of_f.getCount(englishWord, foreignWord);
+        Double score = (1 - pNull)/englishWords.size() * t_given_e_of_f.getCount(englishWord, foreignWord);
         if (score > maxScoreSoFar) {
           maxScoreSoFar = score;
           indexOfBestAlignment = englishIndex;
@@ -45,7 +50,7 @@ public class IBMModel1 implements WordAligner {
         englishIndex += 1;
       }
 
-      Double nullScore = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
+      Double nullScore = pNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
 
       if (nullScore < maxScoreSoFar) {
         // beware: there is a flip here
@@ -60,6 +65,7 @@ public class IBMModel1 implements WordAligner {
   }
 
   public void train(List<SentencePair> trainingdata) {
+    System.out.println("Hyperparamers: numIterations=" + numIterations + ", pNull=" + pNull);
     // Step 1: Initialize
     for (SentencePair pair: trainingdata) {
       // beware: there is a flip here
@@ -88,7 +94,7 @@ public class IBMModel1 implements WordAligner {
         // beware: there is a flip here
         List<String> englishWords = pair.getSourceWords();
         List<String> foreignWords = pair.getTargetWords();
-        PAlignment = (1-PNull)/englishWords.size();
+        PAlignment = (1-pNull)/englishWords.size();
 
         for (String foreignWord: foreignWords) {
           // precompute normalization constant for parameter update
@@ -99,13 +105,13 @@ public class IBMModel1 implements WordAligner {
 
           // compute parameter updates
           for (String englishWord: englishWords) {
-            epsilon = (PAlignment*t_given_e_of_f.getCount(englishWord, foreignWord)) / (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
+            epsilon = (PAlignment*t_given_e_of_f.getCount(englishWord, foreignWord)) / (pNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
             count_of_e_and_f.incrementCount(englishWord, foreignWord, epsilon);
           }
 
           // compute parameter update for NULL
-          epsilon = (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord)) /
-                  (PNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
+          epsilon = (pNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord)) /
+                  (pNull*t_given_e_of_f.getCount(NULL_WORD, foreignWord) + PAlignment*Z);
           count_of_e_and_f.incrementCount(NULL_WORD, foreignWord, epsilon);
         }
       }

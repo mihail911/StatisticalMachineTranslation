@@ -31,7 +31,14 @@ public class IBMModel2 implements WordAligner{
 
   private static int numIterations = 5;
   private static int nullIndex = -1;
-  private static Double PNull = 0.2;
+  private static Double pNull = 0.2;
+  private static Double Model1PNull = 0.2;
+
+  public void setHyperparameters(int numIterations, Double pNull) {
+    this.numIterations = numIterations;
+    this.pNull = pNull;
+    this.Model1PNull = pNull;
+  }
 
   /**
    * Determines the optimal alignment for the given sentence pair.
@@ -52,7 +59,7 @@ public class IBMModel2 implements WordAligner{
 
       for (int i=0; i<englishWords.size(); i++) {
         String englishWord = englishWords.get(i);
-        Double score = (1 - PNull) * q_j_given_i.get(englishWords.size()-1).get(foreignWords.size()-1).getCount(i, j) * t_given_e_of_f.getCount(englishWord, foreignWord);
+        Double score = (1 - pNull) * q_j_given_i.get(englishWords.size()-1).get(foreignWords.size()-1).getCount(i, j) * t_given_e_of_f.getCount(englishWord, foreignWord);
         if (score > maxScoreSoFar) {
           maxScoreSoFar = score;
           indexOfBestAlignment = englishIndex;
@@ -60,7 +67,7 @@ public class IBMModel2 implements WordAligner{
         englishIndex += 1;
       }
 
-      Double nullScore = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
+      Double nullScore = pNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
 
       if (nullScore < maxScoreSoFar) {
         // beware: there is a flip here
@@ -80,11 +87,13 @@ public class IBMModel2 implements WordAligner{
    * the algorithm provided in Figure 2 of the Collins' handout.
    */
   public void train(List<SentencePair> trainingdata) {
+    System.out.println("Hyperparamers: numIterations=" + numIterations + ", pNull=" + pNull);
     int maxFSentLength = 0;
     int maxESentLength = 0;
     Random randGen = new Random();
 
     IBMModel1 model1 = new IBMModel1();
+    model1.setHyperparameters(numIterations, Model1PNull);
     model1.train(trainingdata);
     t_given_e_of_f = model1.get_t_given_e_of_f();
 
@@ -160,16 +169,16 @@ public class IBMModel2 implements WordAligner{
           Z = 0.0;
           for (int i = 0; i<engLength; i++) {
             String englishWord = englishWords.get(i);
-            Z += (1-PNull) * q_j_given_i.get(engLength-1).get(forLength-1).getCount(i,j) *
+            Z += (1-pNull) * q_j_given_i.get(engLength-1).get(forLength-1).getCount(i,j) *
                     t_given_e_of_f.getCount(englishWord, foreignWord);
           }
 
-          epsilon_denominator = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord) + Z;
+          epsilon_denominator = pNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord) + Z;
 
           // Compute parameter updates
           for (int i = 0; i<engLength; i++) {
             String englishWord = englishWords.get(i);
-            epsilon_numerator = (1-PNull) * (q_j_given_i.get(engLength-1).get(forLength-1).getCount(i,j)*
+            epsilon_numerator = (1-pNull) * (q_j_given_i.get(engLength-1).get(forLength-1).getCount(i,j)*
                     t_given_e_of_f.getCount(englishWord, foreignWord));
             epsilon = epsilon_numerator/epsilon_denominator;
 
@@ -178,7 +187,7 @@ public class IBMModel2 implements WordAligner{
           }
 
           // Compute parameter updates for NULL
-          epsilon_numerator = PNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
+          epsilon_numerator = pNull * t_given_e_of_f.getCount(NULL_WORD, foreignWord);
           epsilon = epsilon_numerator/epsilon_denominator;
 
           count_of_e_and_f.incrementCount(NULL_WORD, foreignWord, epsilon);

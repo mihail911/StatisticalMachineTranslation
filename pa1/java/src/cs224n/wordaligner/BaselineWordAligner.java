@@ -21,6 +21,10 @@ public class BaselineWordAligner implements WordAligner {
   // from the training data.
   private CounterMap<String,String> sourceTargetCounts;
 
+  public void setHyperparameters(int numIterations, Double pNull) {
+    return; // no hyperparameters
+  }
+
   public Alignment align(SentencePair sentencePair) {
     // Placeholder code below.
     // TODO Implement an inference algorithm for Eq.1 in the assignment

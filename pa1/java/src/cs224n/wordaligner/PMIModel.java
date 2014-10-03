@@ -16,6 +16,10 @@ public class PMIModel implements WordAligner {
 	private CounterMap<String,String> simOccurCounts =
 							new CounterMap<String,String>();
 
+	public void setHyperparameters(int numIterations, Double pNull) {
+    return; // no hyperparameters
+  }
+
 	/**
 	 * For every sentence pair, computes the optimal alignment
 	 * for every word in the target sentence based on the
