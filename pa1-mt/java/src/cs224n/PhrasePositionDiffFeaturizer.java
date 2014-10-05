@@ -2,6 +2,7 @@ package edu.stanford.nlp.mt.decoder.feat;
 
 import java.util.List;
 import java.util.*;
+import java.lang.Math;
 
 import edu.stanford.nlp.mt.util.FeatureValue;
 import edu.stanford.nlp.mt.util.Featurizable;
@@ -23,7 +24,7 @@ public class PhrasePositionDiffFeaturizer implements RuleFeaturizer<IString, Str
   public List<FeatureValue<String>> ruleFeaturize(
       Featurizable<IString, String> f) {
 
-  	Integer diff = f.targetPosition - f.sourcePosition;
+  	Integer diff = Math.abs(f.targetPosition - f.sourcePosition);
     List<FeatureValue<String>> features = Generics.newLinkedList();
     features.add(new FeatureValue<String>(String.format("%s:%d",
     	"PHRASE_POSITION_DIFF", diff), 1.0));

@@ -22,12 +22,9 @@ public class MyFeaturizer implements RuleFeaturizer<IString, String> {
   @Override
   public List<FeatureValue<String>> ruleFeaturize(
       Featurizable<IString, String> f) {
-
-    // TODO: Return a list of features for the rule. Replace these lines
-    // with your own feature.
-    System.out.println("RULE: "+ f.rule);
+    
     List<FeatureValue<String>> features = Generics.newLinkedList();
-    features.add(new FeatureValue<String>(String.format("%s:%d","TEST_FEATURE",
+    features.add(new FeatureValue<String>(String.format("%s:%d","TARGET_SIZE",
       f.targetPhrase.size()), 1.0));
     return features;
   }

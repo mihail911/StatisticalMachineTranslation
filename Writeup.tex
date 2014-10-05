@@ -1,0 +1,299 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+%\usepackage{fullpage}
+\usepackage[top=1in, bottom=1in, left=0.8in, right=1in]{geometry}
+\usepackage{multicol}
+\usepackage{wrapfig}
+
+\setlength{\columnsep}{0.1pc}
+
+\newcommand{\SUMN}[3]{\displaystyle\sum\limits_{n={#1}}^{{#2}} {#3}}
+\newcommand{\SUMK}[3]{\displaystyle\sum\limits_{k={#1}}^{{#2}} {#3}}
+\newcommand{\SUMX}[3]{\displaystyle\sum\limits_{x={#1}}^{{#2}} {#3}}
+\newcommand{\SUMI}[3]{\displaystyle\sum\limits_{x={#1}}^{{#2}} {#3}}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\title{CS224N Assignment 1: Statistical Machine Translation}
+\author{Mihail Eric -- \texttt{meric@stanford.edu}
+		\and 
+		Victor Zhong --- \texttt{vzhong@stanford.edu}
+}
+\date{\today}
+\begin{document}
+
+  \maketitle
+
+  \vspace{-0.3in}
+  \rule{\linewidth}{0.4pt}
+
+ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ \section*{Models}
+ 	Note, for every model we evaluate the alignment error rate 
+ 	across translations	for three lingual corpora: French-English, Hindi-English,
+ 	and Chinese-English. We report error rates for both development and 
+ 	testing sets on a corpus of 10K parallel sentence data samples.
+
+ \subsection*{Baseline}
+ 	The baseline alignment model simply aligns every source word with the 
+ 	corresponding target word along the diagonal of the standard bilingual 
+ 	word alignment matrix. 
+ \subsection*{Performance and Error Analysis}
+ 	\begin{center}
+	 \begin{tabular}{*{4}{c}}
+	 	\hline
+	 	 & French-English & Hindi-English & Chinese-English  \\
+	 	\hline
+	 	dev & 0.7122 & 0.8713 & 0.9117 \\
+	 	\hline
+	 	test & 0.6865 & 0.8849 & 0.8816 
+	 \end{tabular}
+	 \end{center}	
+ \subsection*{Pointwise Mutual Information}
+ 	Given a French-English sentence pair, denoted by $f=(f_1,f_2,...,f_k)$
+ 	and $e=(e_1,e_2,...,e_m)$, this model seeks to determine the optimal 
+ 	alignment for a pair of words $f_i\in f, $ $e_j\in e$ satisfying 
+ 	$a_i = \argmax_{i} \frac{p(f_i,e_j)}{p(f_i)p(e_j)}$.
+ \subsection*{Performance and Error Analysis}
+ 	\begin{center}
+	 \begin{tabular}{*{4}{c}}
+	 	\hline
+	 	 & French-English & Hindi-English & Chinese-English  \\
+	 	\hline
+	 	dev & 0.7107 & 0.8451 & 0.8278 \\
+	 	\hline
+	 	test & 0.6917 & 0.8221 & 0.8093 
+	 \end{tabular}
+	 \end{center}
+
+	A few notes regarding the performance and errors from this model:
+	 
+ 
+
+ \subsection*{IBM Model 1}
+ 	Given a French-English sentence pair, denoted by $f=(f_1,f_2,...,f_m)$
+ 	and $e=(e_1,e_2,...,e_n)$, an alignment from English to French words
+ 	denoted by $a_1,a_2,...,a_n$, and the length of the English translation $n$
+ 	, this model seeks to learn the following
+ 	distribution: $p(e_1,...,e_n,a_1,...,a_n|f_1,...,f_m,n) = \displaystyle\prod_{i=1}^n
+ 	q(a_i|i,n,m)t(e_i|f_{a_i})$ where $t(e|f)$ denotes the probability of generating 
+ 	English word $e$ from French word $f$ and $q(j|i,n,m)$ is the probability of alignment
+ 	variable $a_i$ taking value $j$, conditioned on the lengths of the English 
+ 	and French sentences. IBM Model 1 assumes that the $q(\cdot|\cdot)$ parameters are a
+ 	constant, so that all possible alignments for a given word have equal probability.
+ 	This model necessitates the application of the Expectation-Maximation
+ 	algorithm to learn these parameters, and so we tuned a hyperparameter for the number
+ 	of iterations of the algorithm update on the dev set. Further, to ensure that the probability
+ 	of null alignment did not vary with the length of an English sentence, we set 
+ 	this probability as a separate constant, denoted by $p_{NULL}$. We also tuned this
+ 	hyperparamater on the dev set. Once we found optimal hyperparameters for a given language,
+ 	we used these parameters in running our model on the test set. Tuning was done
+ 	on a dev set of 10K parallel sentences.
+ 	We found that at $200$ iterations  of the EM algorithm, though our AER rate decreased for dev,
+ 	this produced an overfit model that generated worse AER results for test. The results for hyperparameter tuning across languages are provided below with the selected parameters
+ 	in bold ($p_{NULL}$ on columns and number of iterations on rows):
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{7}{c}}
+ 		& & & & French  & & & \\
+ 		\hline
+ 		& 0.1 & 0.12 & \textbf{0.14} & 0.16 & 0.18 & 0.2 & 0.22 \\
+ 		\hline
+ 	1 &   0.7423 & 0.7433 & 0.7413 & 0.7475 & 0.7484 & 0.7462 & 0.7484 \\
+ 		\hline
+ 	3 &   0.4125 & 0.4379 & 0.4475 & 0.4605 & 0.4721 & 0.4818 & 0.4873 \\
+ 		\hline
+ 		10	& 0.3598 & 0.3684 & 0.3816 & 0.3995	& 0.4055 & 0.4111 & 0.4223\\
+ 		\hline
+		30	& 0.3507 & 0.3462 & 0.3582 & 0.3655 & 0.3791 & 0.3862 & 0.3926\\
+		\hline
+		\textbf{100}	& 0.3452 & 0.3446 & \boxed{0.3441}& 0.3555 &	0.3643 &0.3746 &	0.3869\\
+ 		\end{tabular}
+
+ 	\end{center}
+
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{5}{c}}
+ 		& &  &Hindi   & & \\
+ 		\hline
+ 		&	0.02 &	0.04 &	\textbf{0.06} &	0.08& 1 \\
+ 		\hline
+1	&0.8451 &	0.8445 &	0.8486 &	0.852&	0.8541 \\
+		\hline
+3	&0.6392	& 0.6425 &	0.6429 &	0.6443 &	0.6557 \\
+		\hline
+10	&0.5876	&0.586 &	0.5834 &	0.5872 &	0.596 \\
+		\hline
+\textbf{30}	&0.5876	&0.5841 &	\boxed{0.5796} &	0.5833 &	0.5842 \\
+		\hline
+100	&0.5876	&0.5841 &	0.582 &	0.5819& 	0.5837
+ 		\end{tabular}
+
+ 	\end{center}
+
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{5}{c}}
+ 		& &  &Chinese   & & \\
+ 		\hline
+ 		&	0.02 &	0.04 &	\textbf{0.06} &	0.08& 1 \\
+ 		\hline
+1	&0.8292 &	0.8274&	0.8262&	0.8267&	0.8275 \\
+		\hline
+3	&0.6216&	0.6121&	0.6148&	0.6201&	0.6246 \\
+		\hline
+10	&0.5946&	0.5828&	0.5813&	0.5848&	0.5882 \\
+		\hline
+30	&0.5898&	0.5777&	0.5739&	0.577&	0.5799 \\
+		\hline
+\textbf{100}	&0.5878&	0.576&	\boxed{0.5713}&	0.5733&	0.5759
+ 		\end{tabular}
+
+ 	\end{center}
+ \subsection*{Performance and Error Analysis}
+ 	\begin{center}
+	 \begin{tabular}{*{4}{c}}
+	 	\hline
+	 	 & French-English & Hindi-English & Chinese-English  \\
+	 	\hline
+	 	dev & 0.3441 & 0.5796 & 0.5713 \\
+	 	\hline
+	 	test & 0.3451 & 0.5837 & 0.5794 
+	 \end{tabular}
+	 \end{center}
+
+ \subsection*{IBM Model 2}
+ 	This model seeks to learn the same distribution as IBM Model 1, however
+ 	now the $q(\cdot|\cdot)$ parameters are not left constant and must be learned
+ 	through updates in the EM algorithm. Again, we tune the same hyperparameters:
+ 	$p_{NULL}$ and number of iterations of the algorithm. This tuning is done 
+ 	on a dev set of 10K sentence pairs. We found that at $200$ iterations  of the EM algorithm, though our AER rate decreased for dev,
+ 	this produced an overfit model that generated worse AER results for test. Results are shown below.
+
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{7}{c}}
+ 		& & & & French  & & & \\
+ 		\hline
+ 		& 0.1 & 0.12 & 0.14 & \textbf{0.16} & 0.18 & 0.2 & 0.22 \\
+ 		\hline
+ 	1&	0.4261&	0.4509&	0.4668&	0.4821&	0.4913&	0.4943&	0.4974\\
+ 		\hline
+3&	0.3545&	0.3527&	0.367&	0.377&	0.3914&	0.4014&	0.406 \\
+		\hline
+10&	0.3487&	0.345&	0.3462&	0.3419&	0.3484&	0.3597&	0.3661\\
+		\hline
+30&	0.3453&	0.3384&	0.3363&	0.3392&	0.3359&	0.3435&	0.3554\\
+		\hline
+\textbf{100}&	0.3491&	0.3451&	0.3359&	\boxed{0.3352}	&0.3359&	0.3367&	0.3461
+ 		\end{tabular}
+
+ 	\end{center}
+
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{5}{c}}
+ 		& &  &Hindi   & & \\
+ 		\hline
+ 		&	0.02 &	0.04 &	0.06 &	0.08& \textbf{1} \\
+ 		\hline
+1&	0.652&	0.6523&	0.6524&	0.6617&	0.6734 \\
+		\hline
+3&	0.5876&	0.5841&	0.582&	0.5844&	0.5871 \\
+		\hline
+10&	0.5876&	0.5846&	0.5825&	0.5786&	0.5809 \\
+		\hline
+\textbf{30}&	0.5852&	0.5798&	0.5758&	0.5737&	\boxed{0.5721} \\
+		\hline
+100&	0.5828&	0.575&	0.5733&	0.5737&	0.5726
+ 		\end{tabular}
+
+ 	\end{center}
+
+ 	\begin{center}
+ 		\begin{tabular}{{c}|*{5}{c}}
+ 		& &  &Chinese   & & \\
+ 		\hline
+ 		&	0.02 &	0.04 &	\textbf{0.06} &	0.08& 1 \\
+ 		\hline
+1&	0.632&	0.6286&	0.6357&	0.6407&	0.6431 \\
+		\hline
+3&	0.5896&	0.5783&	0.5808&	0.5856&	0.5887 \\
+		\hline
+10&	0.5836&	0.5715&	0.5711&	0.5734&	0.5764 \\
+		\hline
+30&	0.5829&	0.5703&	0.5683&	0.5696&	0.5719 \\
+		\hline
+\textbf{100}&	0.5826&	0.5701&	\boxed{0.5676}&	0.5676	&0.5689
+ 		\end{tabular}
+
+ 	\end{center}
+
+ \subsection*{Performance}
+ 	\begin{center}
+	 \begin{tabular}{*{4}{c}}
+	 	\hline
+	 	 & French-English & Hindi-English & Chinese-English  \\
+	 	\hline
+	 	dev & 0.3352 & 0.5721 & 0.5676 \\
+	 	\hline
+	 	test & 0.3407 & 0.5775 & 0.5742 
+	 \end{tabular}
+	 \end{center}
+ 
+ \subsection*{Machine Translation Feature Engineering}
+ 	Below we have the BLEU score results of our Phrasal MT system for a number of features,
+ 	including combinations of these features. For each feature or set of features,
+ 	we ran the system  three times, due to the variability of the beam search
+ 	decoding process, and computed an average BLEU score. All of the feature 
+ 	combinations that beat the baseline are highlighted in bold. The TPS (TPS) feature, 
+ 	which was suggested in the assignment handout, captures the number of words in every rule
+ 	in a given derivation, reflecting the intuition that small rules generally don't capture much
+ 	bilingual information, while large rules are typically sparse. The punctuation ratio (PR) feature,
+ 	suggested by Green et. al. (2014) computes a ratio between the number of punctuation marks 
+ 	in the target phrase to the number of
+ 	punctuation marks in the source phrase. This feature is meant to capture the intuition that 
+ 	use of punctuation marks varies greatly across languages and that false alignments typically
+ 	contain punctuation marks. The phrase absolute diff (PAD) feature computes the absolute value
+ 	of the difference between the number of words in the target phrase and the number in the source
+ 	phrase. This feature is meant to reflect the notion that the quality of a translation rule is often
+ 	correlated to differences in length from source to target sentences. We also computed a feature that 
+ 	was the square of this difference (PAD$^2$). The three largest BLEU score improvements came from 
+ 	including the PAD+PR features (+0.06), the TPS feature (+0.114), and the PAD+TPS features (+0.25).\\
+ 	When comparing the translation outputs to baseline, the TPS feature occasionally had more appropriate
+ 	use of certain prepositions such as $\emph{of}$. However, sometimes verbs in the translation of the 
+ 	system with this feature did not conjugate verbs appropriately (i.e. $\emph{had}$ vs. $\emph{having}$).
+ 	The TPS+PR feature system had the advantage of occasionally including articles in sentences (e.g. $\emph{the}$
+ 	that the
+ 	baseline system misses. Additionally, sometimes this system has more obfuscated word reorderings as
+ 	compared to baseline. THE PAD+TPS feature system also has somewhat better article inclusion as compared to 
+ 	baseline. 
+ 	\begin{center}
+	 \begin{tabular}{{c}|*{4}{c}}
+	 	\hline
+	 	\emph{Feature Name} & Run 1 & Run 2 & Run 3 & Average   \\
+	 	\hline
+	 	Baseline&	15.487&	15.224&	15.075&	15.262 \\
+	 	\hline
+PR& 	15.385&	15.244&	15.148&	15.259 \\
+		\hline
+\textbf{TPS}&	15.493&	15.282&	15.354&	15.376 \\
+		\hline
+TPS + PR&	15.133&	15.042&	15.411&	15.195 \\
+		\hline
+\textbf{PAD} &	15.406&	15.325&	15.155&	15.295\\
+		\hline
+PAD$^2$	&15.231&	15.337&	15.069&	15.212\\
+		\hline
+PAD + PR + TPS&	15.263&	15.446&	15.014&	15.241\\
+		\hline
+\textbf{PAD + TPS}&	15.654&	15.547&	15.335&	15.512 \\
+		\hline
+\textbf{PAD + PR}&	15.508&	15.329&	15.129&	15.322
+				
+				
+				
+				
+				
+				
+	 \end{tabular}
+	 \end{center}
+\end{document}

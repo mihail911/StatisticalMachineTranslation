@@ -2,6 +2,7 @@ package edu.stanford.nlp.mt.decoder.feat;
 
 import java.util.List;
 import java.util.*;
+import java.lang.Math;
 
 import edu.stanford.nlp.mt.util.FeatureValue;
 import edu.stanford.nlp.mt.util.Featurizable;
@@ -22,10 +23,13 @@ public class PhraseDiffFeaturizer implements RuleFeaturizer<IString, String> {
   @Override
   public List<FeatureValue<String>> ruleFeaturize(
       Featurizable<IString, String> f) {
+    double target = f.targetPhrase.size();
+    double source = (double) f.sourcePhrase.size();
+    Double diff = Math.abs(target - source);
 
-  	Integer diff = f.targetPhrase.size() - f.sourcePhrase.size();
+
     List<FeatureValue<String>> features = Generics.newLinkedList();
-    features.add(new FeatureValue<String>(String.format("%s:%d","PHRASE_DIFF",
+    features.add(new FeatureValue<String>(String.format("%s:%f","PHRASE_DIFF",
       diff), 1.0));
     return features;
   }
