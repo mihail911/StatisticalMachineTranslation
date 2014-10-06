@@ -9,10 +9,6 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class IBMModel2 implements WordAligner{
-
-  //TODO: HANDLE THE NULL ALIGNMENT CASE!!!
-
-
   // t(f|e): {e, f} note that this is actually indexed in reverse
   // the probability of producing translation f given word e
   private CounterMap<String,String> t_given_e_of_f =
@@ -71,7 +67,6 @@ public class IBMModel2 implements WordAligner{
 
       if (nullScore < maxScoreSoFar) {
         // beware: there is a flip here
-        // System.out.println("score: " + maxScoreSoFar + " nullScore: " + nullScore);
         alignments.addPredictedAlignment(foreignIndex, indexOfBestAlignment);
       }
 
@@ -136,9 +131,7 @@ public class IBMModel2 implements WordAligner{
           String englishWord = englishWords.get(i);
           q_j_given_i.get(engLength-1).get(forLength-1).
                   setCount(i, j, 1.0);
-          // t_given_e_of_f.setCount(englishWord, foreignWord, 1.0); // TODO: should really use Model 1
         }
-        // t_given_e_of_f.setCount(NULL_WORD, foreignWord, 1.0); // TODO: should really use Model 1
       }
     }
 
@@ -147,8 +140,6 @@ public class IBMModel2 implements WordAligner{
       for (int lenE=0; lenE<maxESentLength; lenE++)
         q_j_given_i.get(lenE).set(lenF, Counters.conditionalNormalize(q_j_given_i.get(lenE).get(lenF)));
     t_given_e_of_f = Counters.conditionalNormalize(t_given_e_of_f);
-
-    // TODO: should really check that q_j_given_i is normalized properly
 
     //RUN EM to determine new parameters t(e|f) and q(j|i,l,m)
     for (int iter = 0; iter < numIterations; ++iter) {
@@ -200,8 +191,6 @@ public class IBMModel2 implements WordAligner{
       t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
     }
 
-    //System.out.println(t_given_e_of_f);
-    //System.out.println(q_j_given_i);
   }
 
 }
