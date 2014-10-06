@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-if [ $# -ne 3 ]
+if [ $# -ne 4 ]
 then
-    echo "do ./devtest.sh PMIModel numIterations pNull"
+    echo "do ./devtest.sh language PMIModel numIterations pNull"
     exit -1
 fi
 
-AlignmentModel=$1
-NumIterations=$2
-PNull=$3
+language=$1
+AlignmentModel=$2
+NumIterations=$3
+PNull=$4
 
 java -cp java/classes cs224n.assignments.WordAlignmentTester \
   -dataPath /afs/ir/class/cs224n/data/pa1/ \
-  -model cs224n.wordaligner.$AlignmentModel -language french -evalSet dev \
+  -model cs224n.wordaligner.$AlignmentModel -language $language -evalSet dev \
   -trainSentences 10000 -numIterations $NumIterations -pNull $PNull
