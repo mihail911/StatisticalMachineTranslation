@@ -29,11 +29,7 @@ public class PMIModel implements WordAligner {
 		List<String> targetWords = sentencePair.getTargetWords();
 		List<String> srcWords = sentencePair.getSourceWords();
 
-		// System.out.println(srcWords);
-		// System.out.println(targetWords);
-
 		//Make sure to add null word at beginning of sentence
-		//srcWords.add(0, NULL_WORD);
 		Alignment alignment = new Alignment();
 
 		//Don't actually need scores given how we are computing max
@@ -54,16 +50,6 @@ public class PMIModel implements WordAligner {
 							/(srcWordProbability.getCount(src)*
 								targetWordProbability.getCount(target));
 
-				//TODO: Erase me. All probabilities computed per sentence pair
-				// System.out.println("source: "+ src + " " +
-				// 	String.valueOf(srcWordProbability.getCount(src)));
-				// System.out.println("target: "+ target+ " " +
-				// 	String.valueOf(targetWordProbability.getCount(target)));
-				// System.out.println("cooccur: "+
-				// 	String.valueOf(simOccurCounts.getCount(src,target)));
-				// System.out.println("score: "+ String.valueOf(score));
-				// System.out.println("--------------");
-
 				if (score > maxSoFar){
 					maxSoFar = score;
 					indexOfMax = srcIndex;
@@ -80,7 +66,6 @@ public class PMIModel implements WordAligner {
 			}
 
 		}
-		// System.out.println(alignment);
 		return alignment;
 	}
 
@@ -115,18 +100,11 @@ public class PMIModel implements WordAligner {
 
 			// remove the null word
 			srcWords.remove(0);
-
-			// TODO: erase me, sentences
-			//System.out.println(srcWords);
-			//System.out.println(targetWords);
 		}
 
 		//Normalize counts to get probabilities
 		srcWordProbability = Counters.normalize(srcWordProbability);
 		targetWordProbability = Counters.normalize(targetWordProbability);
-		// TODO: erase me, unigram occurences
-		//System.out.println(srcWordProbability);
-		//System.out.println(targetWordProbability);
 
 		//Iterate over key set of co-occurrence counter map and normalize
 		//appropriately.
@@ -141,7 +119,5 @@ public class PMIModel implements WordAligner {
 			}
 		}
 
-		// TODO: erase me, coocurrences
-		// System.out.println(simOccurCounts);
 	}
 }

@@ -54,13 +54,11 @@ public class IBMModel1 implements WordAligner {
 
       if (nullScore < maxScoreSoFar) {
         // beware: there is a flip here
-        // System.out.println("score: " + maxScoreSoFar + " nullScore: " + nullScore);
         alignments.addPredictedAlignment(foreignIndex, indexOfBestAlignment);
       }
 
       foreignIndex += 1;
     }
-    // System.out.println(alignments);
     return alignments;
   }
 
@@ -118,8 +116,6 @@ public class IBMModel1 implements WordAligner {
 
       // conditionally normalize model
       t_given_e_of_f = Counters.conditionalNormalize(count_of_e_and_f);
-
-      // System.out.println(t_given_e_of_f);
     }
   }
 
