@@ -1,0 +1,4 @@
+Group Members Along with Contributions
+-----------------------------------------
+Mihail Eric (meric@stanford.edu): PMI Model, IBM Model 2, Feature Engineering, Writeup
+Victor Zhong (vzhong@stanford.edu): PMI Model, IBM Model 1, IBM Model 2, Writeup
